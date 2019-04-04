@@ -1,0 +1,17 @@
+{
+  "manifest_version": 2,
+  "name": "RM",
+  "version": "0.1.0",
+
+  "description": "RM (Research Manager) let's you search, save and apply online tools to any given item on a page",
+  "icons": {
+    "128": "RM128.png" 
+  },
+
+  "sidebar_action": {
+    "default_icon": "RM128.png",
+    "default_title": "Research Manager",
+    "default_popup": "./popup/toolbar.html",
+    "browser_style": true
+  }
+}
