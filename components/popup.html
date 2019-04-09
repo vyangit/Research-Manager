@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="../css/popup.css"> 
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    </head>
+    <body>
+        <div id="popup-wrapper">
+         <!-- Inject session lists into div-->
+            <div id="popup-header" class="section-wrapper"> 
+                <div class="popup-header-text">Research Manager</div>
+            </div>
+            <div id="popup-session-selector" class="section-wrapper">
+                <div class="input-group mb-3">    
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="session-selector">Session Topic</label>
+                    </div>
+                    <select id="session-selector" class="custom-select">
+                        <option value="1">One</option>
+                        <option value="2">Two</option>
+                        <option value="3">Three</option>
+                    </select>
+                </div>
+            </div>
+            <div id="popup-tabs-bar">
+                <ul class="popup-tabs">
+                    <li><a href="#">Tabs</a></li>
+                    <li><a href="#">Quotes</a></li>
+                    <li><a href="#">Citations</a></li>
+                    <li><a href="#">Datasets</a></li>
+                </ul>
+            </div>
+            <div id="popup-tab-content" class="section-wrapper">
+                <div id="tab-sessions"></div>
+                <div id="qutoes"></div>
+                <div id="citations"></div>
+                <div id="datasets"></div>
+            </div>
+        </div>
+    </body>
+</html>

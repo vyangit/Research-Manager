@@ -1,0 +1,50 @@
+body {
+    font-size: 1.3em !important;
+}
+
+.section-wrapper {
+    padding: 0.5em;
+}
+
+.popup-header-text{
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bolder;
+}
+
+#popup-tabs-bar::before{
+    border-top: 1px solid grey;
+    content: "";
+    display: block;
+}
+
+#popup-tabs-bar::after{
+    border-top: 1px solid grey;
+    content: "";
+    display: block;
+}
+
+.popup-tabs{
+    display: inline-block;
+    list-style-type: none;
+    margin: 0;
+    padding: 0 0.3em;
+}
+
+.popup-tabs li{
+    float: left;
+    padding: 2px 0.5em;
+}
+
+.popup-tabs li a{
+    color: grey;
+    text-align: center;
+    text-decoration: none;
+}
+  
+.popup-tabs li a:active{
+    color: blue;
+}
+
+.popup-tabs li a:hover{
+    color: black;
+}
