@@ -8,6 +8,10 @@
     "128": "RM128.png" 
   },
 
+  "permissions":[
+    "storage"
+  ],
+
   "browser_action": {
     "default_icon": "RM128.png",
     "default_title": "Research Manager",
@@ -18,6 +22,6 @@
   "sidebar_action": {
     "default_icon": "RM128.png",
     "default_title": "Research Manager",
-    "default_panel": "./components/sideBar.html"
+    "default_panel": "./components/mainInterface.html"
   }
 }
