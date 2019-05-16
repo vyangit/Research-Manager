@@ -122,3 +122,8 @@ border-radius: 50%;
 .popup-tabs li a:hover{
     color: black;
 }
+
+#tabView {
+    max-height: 4vh;
+    overflow-y: scroll;
+}

@@ -1,11 +1,21 @@
 "use strict"
-
 $(window).on('load', initialize);
 
+var sessionsCache; 
+var currentSession;
+
 function initialize() {
-    linkEventListeners();
-    setOnOff();
-    populateSessionDropdown();
+    initializeParameters().then(() => {
+        linkEventListeners();
+        setOnOff();
+        populateSessionDropdown();
+    });
+}
+
+async function initializeParameters() {
+    var query = await browser.storage.local.get(['sessions', 'currentSession']);
+    currentSession = typeof query.sessions === 'undefined' ? '': query.sessions;
+    sessionsCache = typeof query.sessions === 'undefined' ? new Map(): query.sessions;
 }
 
 function linkEventListeners() {
@@ -14,8 +24,7 @@ function linkEventListeners() {
 }
 
 function toggleOnOffListener(e) {
-    browser.storage.local.set({'isOn':e.target.checked})
-    setOnOff();
+    browser.storage.local.set({'isOn':e.target.checked}, () => {setOnOff()});
 }
 
 function setOnOff() {
@@ -33,17 +42,17 @@ function setOnOff() {
 }
 
 function populateSessionDropdown() {
-    browser.storage.local.get('sessions', (res) => {
-        if (typeof res.sessions === 'undefined' || res.sessions.length == 0) {
-            let option = $('<option/>', {
-                value:'Create a session...', 
-                text:'Create a session...',
-                disabled: true,
-                selected: true,
-                hidden: true,
-            });
-            $('#session-selector').append(option);
-        } else {
+    if (sessionsCache.size == 0) {
+        let option = $('<option/>', {
+            value:'Create a session...', 
+            text:'Create a session...',
+            disabled: true,
+            selected: true,
+            hidden: true,
+        });
+        $('#session-selector').append(option);
+    } else {
+        if (currentSession === '') {
             let placeholder = $('<option/>', {
                 value:'Select a session...', 
                 text:'Select a session...',
@@ -51,25 +60,27 @@ function populateSessionDropdown() {
                 selected: true,
                 hidden: true,
             });
-            $('#session-selector').append(option);
-            for (let session in res.sessions) {
-                let option = $('<option/>', {
-                    value:'session.label', 
-                    text:'session.label'
-                });
-                $('#session-selector').append(option);
-            }
         }
-    });
+        $('#session-selector').append(option);
+        for (let session in sessionsCache.values()) {
+            let option = $('<option/>', {
+                value:'session.title', 
+                text:'session.title'
+            });
+            if (session.title == currentSession) {
+                option.attr('selected', true);
+            }
+            $('#session-selector').append(option);
+        }
+    }
 } 
 
 function switchSessionListener(e) {
-    switchSession(e.target.value);
+    browser.storage.local.set({'currentSession': sessionTitle}, () => {switchSession(e.target.value)});
 }
 
 function switchSession(sessionTitle) {
-    console.log(sessionTitle);
-    //TODO
+    switchTab('Tabs');
 }
 
 function switchTab(tabTitle) {
@@ -95,15 +106,23 @@ function clearTabComponents() {
 }
 
 function populateTabsView() {
-
+    let session = sessionsCache.get(currentSession);
+    var tabSessionsList = $('<ul></ul>');
+    for (let i = 0; i < tabSessionsList.length; i++) {
+        let tabSession = tabSessionsList[i];
+        tabSessionsList.add($('<li></li>', {
+            value: i,
+            text: tabSession.title
+        }));
+    }
 }
 
 function populateQuotesView() {
-    
+    let session = sessionsCache.get(currentSession);
 }
 
 function populateCitationsView() {
-    
+    let session = sessionsCache.get(currentSession);
 }
 
 function populateDatasetsView() {
