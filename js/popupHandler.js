@@ -4,11 +4,13 @@ $(window).on('load', initialize);
 
 function initialize() {
     linkEventListeners();
+    setOnOff();
     populateSessionDropdown();
 }
 
 function linkEventListeners() {
     $('#on-off-switch')[0].addEventListener('click', toggleOnOffListener);
+    $('#session-selector')[0].addEventListener('change', switchSessionListener);
 }
 
 function toggleOnOffListener(e) {
@@ -51,15 +53,23 @@ function populateSessionDropdown() {
             });
             $('#session-selector').append(option);
             for (let session in res.sessions) {
-                let option = $('<option/>', {value:'session.label', text:'session.label'});
+                let option = $('<option/>', {
+                    value:'session.label', 
+                    text:'session.label'
+                });
                 $('#session-selector').append(option);
             }
         }
     });
 } 
 
-function switchSession(sessionTitle) {
+function switchSessionListener(e) {
+    switchSession(e.target.value);
+}
 
+function switchSession(sessionTitle) {
+    console.log(sessionTitle);
+    //TODO
 }
 
 function switchTab(tabTitle) {
