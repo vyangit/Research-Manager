@@ -5,18 +5,12 @@ var sessionsCache;
 var currentSession;
 
 function initialize() {
-    initializeParameters().then(() => {
-        linkEventListeners();
-        setOnOff();
-        populateSessionDropdown();
-    });
+    
+    linkEventListeners();
+    setOnOff();
+    populateSessionDropdown();
 }
 
-async function initializeParameters() {
-    var query = await browser.storage.local.get(['sessions', 'currentSession']);
-    currentSession = typeof query.sessions === 'undefined' ? '': query.sessions;
-    sessionsCache = typeof query.sessions === 'undefined' ? new Map(): query.sessions;
-}
 
 function linkEventListeners() {
     $('#on-off-switch')[0].addEventListener('click', toggleOnOffListener);
@@ -87,7 +81,7 @@ function switchTab(tabTitle) {
     clearTabComponents();
     switch(tabTitle) {
         case 'Tabs': 
-            populateTabsView();
+            populateTabGroupsView();
             break;
         case 'Quotes':
             populateQuotesView() 
@@ -105,7 +99,10 @@ function clearTabComponents() {
     $('#tabView').empty();
 }
 
-function populateTabsView() {
+/**
+ * Populates the popup view with tab groups
+ */
+function populateTabGroupsView() {
     let session = sessionsCache.get(currentSession);
     var tabSessionsList = $('<ul></ul>');
     for (let i = 0; i < tabSessionsList.length; i++) {
