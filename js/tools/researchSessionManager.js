@@ -20,9 +20,8 @@ class ResearchSession {
       this.citedArticleSnippets = new Map(); // Article snippets should have a corresponding file path or webpage reference
       this.citations = new Map(); // Empty until generated; keys are citation formats and values are arrays of citations
    }
-
    
-   generateCitations() {
+   generateCitations(citationType) {
       // Be mindful that there are different types of citations such as APA/MLA and also if the citation should be webpage based or article based
       //TODO: Figure out how to extract citations from a webpage as well from the summary/pdf doc provided on the page
       //TODO: Implement func
@@ -35,16 +34,16 @@ class ResearchSession {
  */
 function startNewResearchSession(title) {
    let session = new ResearchSession(title);
-   storageWrapper.sessionsCache.put(title, session);
-   storageWrapper.saveStorageChanges();
+   extension.sessionsCache.put(title, session);
+   extension.saveStorageChanges();
 }
 
 /**
  * Load an existing research session
  */
 function loadResearchSession(title) {
-   storageWrapper.currentSession = title;
-   storageWrapper.saveStorageChanges();
+   extension.currentSession = title;
+   extension.saveStorageChanges();
 }
 
 /**
@@ -53,8 +52,8 @@ function loadResearchSession(title) {
  * @param mergingSessionTitle The session to be merged and deleted
  */
 function mergeResearchSession(mainSessionTitle, mergingSessionTitle) {
-   let mainSession = storageWrapper.sessionsCache.get(mainSessionTitle);
-   let mergingSession = storageWrapper.sessionsCache.get(mergingSessionTitle);
+   let mainSession = extension.sessionsCache.get(mainSessionTitle);
+   let mergingSession = extension.sessionsCache.get(mergingSessionTitle);
    let mergedSession = new ResearchSession(mainSession.title);
    mergedSession.rssFeeds = mainSession.rssFeeds.concat(mergingSession.rssFeeds);
    mergedSession.tabGroups = mainSession.tabGroups.concat(mergingSession.tabGroups);
@@ -62,16 +61,16 @@ function mergeResearchSession(mainSessionTitle, mergingSessionTitle) {
    mergedSession.savedArticleFilePaths = new Map(...mainSession.savedArticleFilePaths, ...mergingSession.savedArticleFilePaths);
    mergedSession.citedArticleSnippets = new Map(...mainSession.citedArticleSnippets, ...mergingSession.citedArticleSnippets);
    
-   storageWrapper.sessionsCache.put(mergedSession.title, mergedSession);
-   storageWrapper.sessionsCache.delete(mainSessionTitle);
-   storageWrapper.sessionsCache.delete(mergingSessionTitle);
-   storageWrapper.saveStorageChanges();
+   extension.sessionsCache.put(mergedSession.title, mergedSession);
+   extension.sessionsCache.delete(mainSessionTitle);
+   extension.sessionsCache.delete(mergingSessionTitle);
+   extension.saveStorageChanges();
 }
 
 /**
  * Delete an existing research session
  */
 function deleteResearchSession(title) {
-   storageWrapper.sessionsCache.delete(title);
-   storageWrapper.saveStorageChanges();
+   extension.sessionsCache.delete(title);
+   extension.saveStorageChanges();
 }
