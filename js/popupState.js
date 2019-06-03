@@ -49,6 +49,9 @@ class PopupState {
     linkEventListeners() {
         $('#on-off-switch')[0].addEventListener('click', this.toggleOnOffListener.bind(this));
         $('#session-selector')[0].addEventListener('change', this.switchSessionListener.bind(this));
+        $('#toggle-create-new-session-btn')[0].addEventListener('click', this.toggleSessionCreator.bind(this));
+        $('#cancel-new-session-btn')[0].addEventListener('click', this.toggleSessionCreator.bind(this));
+        $('#create-new-session-btn')[0].addEventListener('click', this.createNewSession.bind(this));
     }
     
     toggleOnOffListener(e) {
@@ -61,19 +64,37 @@ class PopupState {
         this.extension.saveStorageChanges();
     }
 
+    toggleSessionCreator() {
+        $('#new-session-name-text-input').val('');
+        $('#popup-main-interface').attr('hidden', !$('#popup-main-interface').attr('hidden'));
+        $('#session-creator').attr('hidden', !$('#session-creator').attr('hidden'));
+    }
+
+    createNewSession() {
+        let name = $('#new-session-name-text-input').val();
+        if (this.extension.sessionsCache.has(name)) {
+            $('#new-session-name-warning').attr('hidden', false);
+        } else {
+            this.extension.currentSession = name;
+            this.extension.researchSessionManager.startNewResearchSession(name);
+            this.toggleSessionCreator();
+        }
+    }
+
     setOnOff() {
         if (this.extension.isOn) {
             $('#on-off-switch-label').text('On');
             $('#on-off-switch').attr('checked', true);
-            $('#popup-main-interface').attr('hidden', false);
+            $('#popup-interface-wrapper').attr('hidden', false);
         } else {
             $('#on-off-switch-label').text('Off');
             $('#on-off-switch').attr('checked', false);
-            $('#popup-main-interface').attr('hidden', true);
+            $('#popup-interface-wrapper').attr('hidden', true);
         }
     }
     
     populateSessionDropdown() {
+        $('#session-selector').empty();
         if (this.extension.sessionsCache.size == 0) {
             let option = $('<option/>', {
                 value:'Create a session...', 
@@ -92,15 +113,17 @@ class PopupState {
                     selected: true,
                     hidden: true,
                 });
+                $('#session-selector').append(placeholder);
             }
-            $('#session-selector').append(option);
-            for (let session in this.extension.sessionsCache.values()) {
+
+            for (let session of this.extension.sessionsCache.values()) {
                 let option = $('<option/>', {
-                    value:'session.title', 
-                    text:'session.title'
+                    value:session.title, 
+                    text:session.title
                 });
                 if (session.title == this.extension.currentSession) {
                     option.attr('selected', true);
+                    this.switchSession(session.title)
                 }
                 $('#session-selector').append(option);
             }
@@ -113,9 +136,10 @@ class PopupState {
     
     switchTab(tabTitle) {
         this.clearTabComponents();
+        $('session-tabs-section').attr('hidden', false);
         switch(tabTitle) {
             case 'Tabs': 
-            this.populateTabGroupsView();
+                this.populateTabGroupsView();
                 break;
             case 'Quotes':
                 this.populateQuotesView() 
@@ -130,14 +154,14 @@ class PopupState {
     }
     
     clearTabComponents() {
-        $('#tabView').empty();
+        $('#tab-view').empty();
     }
     
     /**
      * Populates the popup view with tab groups
      */
     populateTabGroupsView() {
-        let session = this.extension.sessionsCache.get(currentSession);
+        let session = this.extension.sessionsCache.get(this.extension.currentSession);
         var tabSessionsList = $('<ul></ul>');
         for (let i = 0; i < tabSessionsList.length; i++) {
             let tabSession = tabSessionsList[i];

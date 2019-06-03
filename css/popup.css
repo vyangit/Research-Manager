@@ -123,7 +123,14 @@ border-radius: 50%;
     color: black;
 }
 
-#tabView {
+#tab-view {
     max-height: 4vh;
     overflow-y: scroll;
+}
+
+.warning-text {
+    margin: 0;
+    padding: 0;
+    font-size: 0.8em;
+    color: rgb(255,0,0);
 }

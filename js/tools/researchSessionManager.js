@@ -26,51 +26,70 @@ class ResearchSession {
       //TODO: Figure out how to extract citations from a webpage as well from the summary/pdf doc provided on the page
       //TODO: Implement func
    }
+
+   /**
+    * Saves tab session information
+    * 
+    * @param {Arrayof{String}} tabLinks The tab links to save 
+    */
+   addTabGroup(tabLinks) {
+      this.tabGroups.push(tabLinks);
+   }
 }
 
-/**
- * Start a new research session and save to storage
- * @return {ResearchSession} The new research session generated
- */
-function startNewResearchSession(title) {
-   let session = new ResearchSession(title);
-   extension.sessionsCache.put(title, session);
-   extension.saveStorageChanges();
-}
-
-/**
- * Load an existing research session
- */
-function loadResearchSession(title) {
-   extension.currentSession = title;
-   extension.saveStorageChanges();
-}
-
-/**
- * Merge two existing research sessions
- * @param mainSessionTitle The session to be updated
- * @param mergingSessionTitle The session to be merged and deleted
- */
-function mergeResearchSession(mainSessionTitle, mergingSessionTitle) {
-   let mainSession = extension.sessionsCache.get(mainSessionTitle);
-   let mergingSession = extension.sessionsCache.get(mergingSessionTitle);
-   let mergedSession = new ResearchSession(mainSession.title);
-   mergedSession.rssFeeds = mainSession.rssFeeds.concat(mergingSession.rssFeeds);
-   mergedSession.tabGroups = mainSession.tabGroups.concat(mergingSession.tabGroups);
-   mergedSession.savedCsvFilePaths = mainSession.savedCsvFilePaths.concat(mergingSession.savedCsvFilePaths);
-   mergedSession.savedArticleFilePaths = new Map(...mainSession.savedArticleFilePaths, ...mergingSession.savedArticleFilePaths);
-   mergedSession.citedArticleSnippets = new Map(...mainSession.citedArticleSnippets, ...mergingSession.citedArticleSnippets);
+class ResearchSessionManager {
+   /**
+    * Generic ResearchSessionManager constructor
+    * @param {ExtensionState} extension 
+    */
+   constructor(extension) {
+      this.extension = extension;
+   }
    
-   extension.sessionsCache.put(mergedSession.title, mergedSession);
-   extension.sessionsCache.delete(mainSessionTitle);
-   extension.sessionsCache.delete(mergingSessionTitle);
-   extension.saveStorageChanges();
-}
+   /**
+    * Start a new research session and save to storage
+    * @return {ResearchSession} The new research session generated
+    */
+   startNewResearchSession(title) {
+      let session = new ResearchSession(title);
+      this.extension.sessionsCache.set(title, session);
+      this.extension.saveStorageChanges();
+   }
 
-/**
- * Delete an existing research session
- */
-function deleteResearchSession(title) {
-   extension.sessionsCache.delete(title);
-   extension.saveStorageChanges();
+   /**
+    * Load an existing research session
+    */
+   loadResearchSession(title) {
+      this.extension.currentSession = title;
+      this.extension.saveStorageChanges();
+   }
+
+   /**
+    * Merge two existing research sessions
+    * @param mainSessionTitle The session to be updated
+    * @param mergingSessionTitle The session to be merged and deleted
+    */
+   mergeResearchSession(mainSessionTitle, mergingSessionTitle) {
+      let mainSession = this.extension.sessionsCache.get(mainSessionTitle);
+      let mergingSession = this.extension.sessionsCache.get(mergingSessionTitle);
+      let mergedSession = new ResearchSession(mainSession.title);
+      mergedSession.rssFeeds = mainSession.rssFeeds.concat(mergingSession.rssFeeds);
+      mergedSession.tabGroups = mainSession.tabGroups.concat(mergingSession.tabGroups);
+      mergedSession.savedCsvFilePaths = mainSession.savedCsvFilePaths.concat(mergingSession.savedCsvFilePaths);
+      mergedSession.savedArticleFilePaths = new Map(...mainSession.savedArticleFilePaths, ...mergingSession.savedArticleFilePaths);
+      mergedSession.citedArticleSnippets = new Map(...mainSession.citedArticleSnippets, ...mergingSession.citedArticleSnippets);
+      
+      this.extension.sessionsCache.set(mergedSession.title, mergedSession);
+      this.extension.sessionsCache.delete(mainSessionTitle);
+      this.extension.sessionsCache.delete(mergingSessionTitle);
+      this.extension.saveStorageChanges();
+   }
+
+   /**
+    * Delete an existing research session
+    */
+   deleteResearchSession(title) {
+      this.extension.sessionsCache.delete(title);
+      this.extension.saveStorageChanges();
+   }
 }

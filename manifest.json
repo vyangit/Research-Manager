@@ -26,6 +26,7 @@
   "sidebar_action": {
     "default_icon": "RM128.png",
     "default_title": "Research Manager",
-    "default_panel": "components/mainInterface.html"
+    "default_panel": "components/mainInterface.html",
+    "open_at_install": false
   }
 }
