@@ -44,6 +44,8 @@ class ExtensionState {
         });
         this.isLoaded = true;
     }
+
+
 }
 
 /**

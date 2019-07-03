@@ -27,6 +27,11 @@ class PopupState {
         await this.linkExtensionStateListeners();
     }
 
+
+
+    /** 
+     * Links event listeners to the extension storage
+    */ 
     async linkExtensionStateListeners() {
         // Extension state should be updated before storage is
         await browser.storage.onChanged.addListener( (changes, areaName) => {
@@ -35,10 +40,13 @@ class PopupState {
                     switch(itemChanged) {
                         case 'isOn':
                             this.setOnOff();
+                            break;
                         case 'sessions':
                             this.populateSessionDropdown();
+                            break;
                         case 'currentSession':
-                            this.switchSession(changes[itemChanged].newValue);
+                            this.resetSessionView();
+                            break;
                     }
                 }
             }
@@ -46,41 +54,6 @@ class PopupState {
     }
 
     
-    linkEventListeners() {
-        $('#on-off-switch')[0].addEventListener('click', this.toggleOnOffListener.bind(this));
-        $('#session-selector')[0].addEventListener('change', this.switchSessionListener.bind(this));
-        $('#toggle-create-new-session-btn')[0].addEventListener('click', this.toggleSessionCreator.bind(this));
-        $('#cancel-new-session-btn')[0].addEventListener('click', this.toggleSessionCreator.bind(this));
-        $('#create-new-session-btn')[0].addEventListener('click', this.createNewSession.bind(this));
-    }
-    
-    toggleOnOffListener(e) {
-        this.extension.isOn = e.target.checked;
-        this.extension.saveStorageChanges();
-    }
-
-    switchSessionListener(e) {
-        this.extension.currentSession = e.target.value;
-        this.extension.saveStorageChanges();
-    }
-
-    toggleSessionCreator() {
-        $('#new-session-name-text-input').val('');
-        $('#popup-main-interface').attr('hidden', !$('#popup-main-interface').attr('hidden'));
-        $('#session-creator').attr('hidden', !$('#session-creator').attr('hidden'));
-    }
-
-    createNewSession() {
-        let name = $('#new-session-name-text-input').val();
-        if (this.extension.sessionsCache.has(name)) {
-            $('#new-session-name-warning').attr('hidden', false);
-        } else {
-            this.extension.currentSession = name;
-            this.extension.researchSessionManager.startNewResearchSession(name);
-            this.toggleSessionCreator();
-        }
-    }
-
     setOnOff() {
         if (this.extension.isOn) {
             $('#on-off-switch-label').text('On');
@@ -123,38 +96,90 @@ class PopupState {
                 });
                 if (session.title == this.extension.currentSession) {
                     option.attr('selected', true);
-                    this.switchSession(session.title)
+                    this.resetSessionView();
                 }
                 $('#session-selector').append(option);
             }
         }
     } 
     
-    switchSession(sessionTitle) {
+    resetSessionView() {
+        $('#session-tabs-section').attr('hidden', false);
         this.switchTab('Tabs');
+    }
+    
+    /** 
+     * Links pop up event listeners
+    */
+     linkEventListeners() {
+        $('#on-off-switch')[0].addEventListener('click', this.toggleOnOffListener.bind(this));
+        $('#session-selector')[0].addEventListener('change', this.switchSessionListener.bind(this));
+        $('#toggle-create-new-session-btn')[0].addEventListener('click', this.toggleSessionCreator.bind(this));
+        $('#cancel-new-session-btn')[0].addEventListener('click', this.toggleSessionCreator.bind(this));
+        $('#create-new-session-btn')[0].addEventListener('click', this.createNewSession.bind(this));
+        $('.tab-item').on('click', this.setTab.bind(this));
+    }
+    
+    toggleOnOffListener(e) {
+        this.extension.isOn = e.target.checked;
+        this.extension.saveStorageChanges();
+    }
+
+    switchSessionListener(e) {
+        this.extension.currentSession = e.target.value;
+        console.log(this.extension.sessionsCache.get(this.extension.currentSession));
+        this.extension.saveStorageChanges();
+    }
+
+    toggleSessionCreator() {
+        $('#new-session-name-text-input').val('');
+        $('#popup-main-interface').attr('hidden', !$('#popup-main-interface').attr('hidden'));
+        $('#session-creator').attr('hidden', !$('#session-creator').attr('hidden'));
+    }
+
+    createNewSession() {
+        let name = $('#new-session-name-text-input').val();
+        if (this.extension.sessionsCache.has(name)) {
+            $('#new-session-name-warning').attr('hidden', false);
+        } else {
+            this.extension.currentSession = name;
+            this.extension.researchSessionManager.startNewResearchSession(name);
+            this.toggleSessionCreator();
+        }
+    }
+
+    setTab(e) {
+        this.switchTab(e.target.text);
     }
     
     switchTab(tabTitle) {
         this.clearTabComponents();
         $('session-tabs-section').attr('hidden', false);
+
+        $('.tab-item').removeClass('active');
+
         switch(tabTitle) {
             case 'Tabs': 
+                $('#tab-item-tabs').addClass('active');
                 this.populateTabGroupsView();
                 break;
             case 'Quotes':
+                $('#tab-item-quotes').addClass('active');
                 this.populateQuotesView() 
                 break;
             case 'Citations':
+                $('#tab-item-citations').addClass('active');
                 this.populateCitationsView()
                 break;
             case 'Datasets':
+                $('#tab-item-datasets').addClass('active');
                 this.populateDatasetsView()
                 break;
         }
     }
     
     clearTabComponents() {
-        $('#tab-view').empty();
+        $('#popup-tab-content').empty();
     }
     
     /**
@@ -162,14 +187,60 @@ class PopupState {
      */
     populateTabGroupsView() {
         let session = this.extension.sessionsCache.get(this.extension.currentSession);
-        var tabSessionsList = $('<ul></ul>');
-        for (let i = 0; i < tabSessionsList.length; i++) {
-            let tabSession = tabSessionsList[i];
-            tabSessionsList.add($('<li></li>', {
+        var tabGroupsView = $('<div></div>',{
+            class: "mx-auto"
+        });
+        var tabGroups = session.tabGroups;
+
+        // Add list view of tab groups already created
+        let tabGroupsList = $('<div></div>', {
+            id: 'tab-groups-view'
+        })
+        for (let i = 0; i < tabGroups.length; i++) {
+            let tabGroup = tabGroups[i];
+            console.log(tabGroup)
+            tabGroupsList.append($('<div></div>', {
+                class: 'session-tab-group-item',
                 value: i,
-                text: tabSession.title
+                text: tabGroup.tabs.length + ' tabs'
             }));
-        }
+        } 
+
+        // Add input to add new tab groups
+        var addNewTabGroupInput = $('<div></div>', {
+            class: "input-group mb-3"
+        }).append($('<input></input>', {
+                id: "tab-group-name-text-input",
+                class: "form-control",
+                type: "text",
+                placeholder: '(Optional) Tab Group Name',
+            }), $('<div></div>', {
+                class: "input-group-append"
+                }).append($('<button></button>', {
+                    class: "btn btn-primary",
+                    click: this.createNewTabGroup.bind(this),
+                    text: "Create tab group",
+                    type: "button"
+                }))
+        );
+
+        tabGroupsView.append(tabGroupsList);
+        tabGroupsView.append(addNewTabGroupInput);
+        $('#popup-tab-content').append(tabGroupsView);
+    }
+
+    createNewTabGroup() {
+        let name = $('#tab-group-name-text-input').val();
+        let sessionTitle = this.extension.currentSession;
+        let tabsQuery = browser.tabs.query({
+            currentWindow: true
+        });
+        console.log("querying tabs")       
+        tabsQuery.then((tabs) => {
+            console.log("Adding tabs")
+            this.extension.researchSessionManager.addNewTabGroupToSession(name, sessionTitle, tabs);
+            this.resetSessionView();
+        });
     }
     
     populateQuotesView() {
