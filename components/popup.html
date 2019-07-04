@@ -49,6 +49,12 @@
                         </div>
                         <div id="popup-tab-content" class="section-wrapper">
                         </div>
+                        <div id='session-warnings'>
+                            <div id="omitted-tabs-warning" class="global-warning warning-text" hidden>
+                                <u>The following tabs were omitted:</u>
+                                <div id="omitted-tabs-list"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div id="session-creator" class="section-wrapper" hidden>
@@ -63,25 +69,9 @@
                             </button>
                         </div>
                     </div>
-                    <p id="new-session-name-warning" class="warning-text" hidden>Name is already in use!</p>
+                    <p id="new-session-name-warning" class="session-name-input-warning warning-text" hidden>Name is already in use!</p>
+                    <p id="new-session-empty-name-warning" class="session-name-input-warning warning-text" hidden>Name can not be empty!</p>
                 </div>
             </div>
-            <!-- <button id="test-button" class="btn btn-primary" data-toggle="modal" data-target="#messageModal"> test button</button>
-            <div id="messageModal" class="modal fade" tabIndex='-1' role='dialog' aria-labelledby="messageModal" aria-hidden="true">
-                <div class='modal-dialog' role="document">
-                    <div class='modal-content'>
-                        <div class='modal-header'>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <div class='modal-body'>
-                                <p>Modal body text goes here.</p>
-                        </div>
-                        <div class='modal-footer'></div>
-                    </div>
-                </div>
-            </div> -->
-        </div>
     </body>
 </html>

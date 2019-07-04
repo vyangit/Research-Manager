@@ -55,7 +55,6 @@ class PopupState {
         });
     }
 
-    
     setOnOff() {
         if (this.extension.isOn) {
             $('#on-off-switch-label').text('On');
@@ -106,14 +105,20 @@ class PopupState {
     } 
     
     resetSessionView() {
-        $('#session-tabs-section').attr('hidden', false);
-        this.switchTab('Tabs');
+        let sessionTitle = this.extension.currentSession;
+        if (sessionTitle === '' || sessionTitle === undefined) {  
+            $('#session-tabs-section').attr('hidden', true);
+        } else {        
+            $('#session-tabs-section').attr('hidden', false);
+            this.switchTab('Tabs');
+        }
     }
     
     /** 
      * Links pop up event listeners
     */
      linkEventListeners() {
+        $(document).on('click',this.resetWindow.bind(this));
         $('#on-off-switch')[0].addEventListener('click', this.toggleOnOffListener.bind(this));
         $('#session-selector')[0].addEventListener('change', this.switchSessionListener.bind(this));
         $('#toggle-create-new-session-btn')[0].addEventListener('click', this.toggleSessionCreator.bind(this));
@@ -122,6 +127,14 @@ class PopupState {
         $('.tab-item').on('click', this.setTab.bind(this));
     }
     
+    resetWindow() {
+        this.clearGlobalWarnings();
+    }
+    
+    clearGlobalWarnings() {
+        $('.global-warning').attr('hidden', true);
+    }
+
     toggleOnOffListener(e) {
         this.extension.isOn = e.target.checked;
         this.extension.saveStorageChanges();
@@ -129,7 +142,6 @@ class PopupState {
 
     switchSessionListener(e) {
         this.extension.currentSession = e.target.value;
-        console.log(this.extension.sessionsCache.get(this.extension.currentSession));
         this.extension.saveStorageChanges();
     }
 
@@ -141,8 +153,14 @@ class PopupState {
 
     createNewSession() {
         let name = $('#new-session-name-text-input').val();
-        if (this.extension.sessionsCache.has(name)) {
+        $('.session-name-input-warning').attr('hidden', true);
+
+        if (name === '') {
+            $('#new-session-empty-name-warning').attr('hidden', false);
+            $('#new-session-name-text-input').focus();
+        } else if (this.extension.sessionsCache.has(name)) {
             $('#new-session-name-warning').attr('hidden', false);
+            $('#new-session-name-text-input').focus();
         } else {
             this.extension.currentSession = name;
             this.extension.researchSessionManager.startNewResearchSession(name);
@@ -256,36 +274,26 @@ class PopupState {
 
         tabsQuery.then((tabs) => {
             let omittedTabs = this.extension.researchSessionManager.addNewTabGroupToSession(name, sessionTitle, tabs);
-            // if (omittedTabs.length != 0) {
-            //     this.displayOmittedTabsModal(omittedTabs)
-            // };
+            if (omittedTabs.length != 0) {
+                this.displayOmittedTabsMessage(omittedTabs)
+            };
             this.resetSessionView();
         });
     }
     
-    // displayOmittedTabsModal(omittedTabs) {
-    //     console.log('Display modal')
-    //     this.emptyPopupModal();
-    //     $('.modal-header').append('<h4></h4>', {
-    //         text: 'The following tabs were omitted'
-    //     });
+    displayOmittedTabsMessage(omittedTabs) {
+        this.clearGlobalWarnings();
         
-    //     var list = $('<ul></ul>');
-    //     for (let tab of omittedTabs) {
-    //         list.append('<li></li>', {
-    //             text: tab.title + ' - ' + tab.url
-    //         });
-    //     }
+        $('#omitted-tabs-list').empty();
+        for (let omittedTab of omittedTabs) {
+            let text = omittedTab.url + ' - ' + omittedTab.title;
+            $('#omitted-tabs-list').append($('<div></div>',{
+                text: text
+            }))
+        }
 
-    //     $('.modal-body').append(list);
-    //     $('#message-modal').show();
-    // }
-
-    // emptyPopupModal() {
-    //     $('.modal-header').empty();
-    //     $('.modal-body').empty();
-    //     $('.modal-footer').empty();
-    // }
+        $('#omitted-tabs-warning').attr('hidden', false);        
+    }
 
     populateQuotesView() {
         let session = this.extension.sessionsCache.get(this.extension.currentSession);
