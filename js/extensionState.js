@@ -9,7 +9,8 @@ class ExtensionState {
         this.isOn; // Indicates if extension is turned on or off, futureproofing background workloads memory usage
         this.sessionsCache; // Map with session title as key and session as value
         this.currentSession; // Title of current {ResearchSession}
-        
+        this.rssFeeds;
+        this.researchSessionManager = new ResearchSessionManager(this);
         this.initializeStorage();
     }
 
@@ -25,6 +26,7 @@ class ExtensionState {
         this.isOn = getOrDefault(query.isOn, false);
         this.currentSession = getOrDefault(query.currentSession, '');
         this.sessionsCache = getOrDefault(query.sessions, new Map());
+        this.rssFeeds = getOrDefault(query.sessions, new Array());
         this.isLoaded = true;
         return;
     }
@@ -37,10 +39,13 @@ class ExtensionState {
         await browser.storage.local.set({
             isOn: this.isOn,
             sessions: this.sessionsCache,
-            currentSession: this.currentSession
+            currentSession: this.currentSession,
+            rssFeeds: this.rssFeeds
         });
         this.isLoaded = true;
     }
+
+
 }
 
 /**

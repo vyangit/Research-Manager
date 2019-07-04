@@ -22,28 +22,56 @@
                     <label class="switch-label" id="on-off-switch-label" for="on-off-switch">Off</label>
                 </span>
             </div>
-            <div id="popup-main-interface" hidden>
-                <div id="popup-session-selector" class="section-wrapper">
-                    <div class="input-group mb-3">    
-                        <div class="input-group-prepend">
-                            <label class="input-group-text" for="session-selector">Session Topic</label>
+            <div id="popup-interface-wrapper" hidden>
+                <div id="popup-main-interface">
+                    <div id="popup-session-selector" class="section-wrapper">
+                        <div class="input-group mb-3">    
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for="session-selector">Session Topic</label>
+                            </div>
+                            <select id="session-selector" class="custom-select">
+                            </select>
+                            <div class="input-group-append">
+                                <button id="toggle-create-new-session-btn" class="btn btn-primary" type="button" data-toggle="tooltip" title="Add session">
+                                    +
+                                </button>
+                            </div>
+                        </div>    
+                    </div>
+                    <div id="session-tabs-section" hidden>
+                        <div id="popup-tabs-bar">
+                            <ul class="nav nav-tabs justify-content-center">
+                                <li class="nav-item"><a id="tab-item-tabs" class="nav-link tab-item active" href="#">Tabs</a></li>
+                                <li class="nav-item"><a id="tab-item-quotes" class="nav-link tab-item" href="#">Quotes</a></li>
+                                <li class="nav-item"><a id="tab-item-citations" class="nav-link tab-item" href="#">Citations</a></li>
+                                <li class="nav-item"><a id="tab-item-datasets" class="nav-link tab-item" href="#">Datasets</a></li>
+                            </ul>
                         </div>
-                        <select id="session-selector" class="custom-select">
-                        </select>
+                        <div id="popup-tab-content" class="section-wrapper">
+                        </div>
+                        <div id='session-warnings'>
+                            <div id="omitted-tabs-warning" class="global-warning warning-text" hidden>
+                                <u>The following tabs were omitted:</u>
+                                <div id="omitted-tabs-list"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div id="popup-tabs-bar">
-                    <ul class="popup-tabs">
-                        <li><a href="#">Tabs</a></li>
-                        <li><a href="#">Quotes</a></li>
-                        <li><a href="#">Citations</a></li>
-                        <li><a href="#">Datasets</a></li>
-                    </ul>
-                </div>
-                <div id="popup-tab-content" class="section-wrapper">
-                    <div id="tabView"></div>
+                <div id="session-creator" class="section-wrapper" hidden>
+                    <div class="input-group mb-1">    
+                        <input id="new-session-name-text-input" type="text" class="form-control" placeholder="New Session's Name"></input>
+                        <div class="input-group-append">
+                            <button id="create-new-session-btn" class="btn btn-primary" type="button" data-toggle="tooltip" title="Add session">
+                                Create
+                            </button>
+                            <button id="cancel-new-session-btn" class="btn btn-danger" type="button" data-toggle="tooltip" title="Add session">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                    <p id="new-session-name-warning" class="session-name-input-warning warning-text" hidden>Name is already in use!</p>
+                    <p id="new-session-empty-name-warning" class="session-name-input-warning warning-text" hidden>Name can not be empty!</p>
                 </div>
             </div>
-        </div>
     </body>
 </html>

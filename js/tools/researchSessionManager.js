@@ -28,49 +28,141 @@ class ResearchSession {
    }
 }
 
-/**
- * Start a new research session and save to storage
- * @return {ResearchSession} The new research session generated
- */
-function startNewResearchSession(title) {
-   let session = new ResearchSession(title);
-   extension.sessionsCache.put(title, session);
-   extension.saveStorageChanges();
-}
-
-/**
- * Load an existing research session
- */
-function loadResearchSession(title) {
-   extension.currentSession = title;
-   extension.saveStorageChanges();
-}
-
-/**
- * Merge two existing research sessions
- * @param mainSessionTitle The session to be updated
- * @param mergingSessionTitle The session to be merged and deleted
- */
-function mergeResearchSession(mainSessionTitle, mergingSessionTitle) {
-   let mainSession = extension.sessionsCache.get(mainSessionTitle);
-   let mergingSession = extension.sessionsCache.get(mergingSessionTitle);
-   let mergedSession = new ResearchSession(mainSession.title);
-   mergedSession.rssFeeds = mainSession.rssFeeds.concat(mergingSession.rssFeeds);
-   mergedSession.tabGroups = mainSession.tabGroups.concat(mergingSession.tabGroups);
-   mergedSession.savedCsvFilePaths = mainSession.savedCsvFilePaths.concat(mergingSession.savedCsvFilePaths);
-   mergedSession.savedArticleFilePaths = new Map(...mainSession.savedArticleFilePaths, ...mergingSession.savedArticleFilePaths);
-   mergedSession.citedArticleSnippets = new Map(...mainSession.citedArticleSnippets, ...mergingSession.citedArticleSnippets);
+class ResearchSessionManager {
+   /**
+    * Generic ResearchSessionManager constructor
+    * @param {ExtensionState} extension 
+    */
+   constructor(extension) {
+      this.extension = extension;
+   }
    
-   extension.sessionsCache.put(mergedSession.title, mergedSession);
-   extension.sessionsCache.delete(mainSessionTitle);
-   extension.sessionsCache.delete(mergingSessionTitle);
-   extension.saveStorageChanges();
+   /**
+    * Start a new research session and save to storage
+    * @return {ResearchSession} The new research session generated
+    */
+   startNewResearchSession(title) {
+      let session = new ResearchSession(title);
+      this.extension.sessionsCache.set(title, session);
+      this.extension.saveStorageChanges();
+   }
+
+   /**
+    * Load an existing research session
+    */
+   loadResearchSession(title) {
+      this.extension.currentSession = title;
+      this.extension.saveStorageChanges();
+   }
+
+   /**
+    * Merge two existing research sessions
+    * @param mainSessionTitle The session to be updated
+    * @param mergingSessionTitle The session to be merged and deleted
+    */
+   mergeResearchSession(mainSessionTitle, mergingSessionTitle) {
+      let mainSession = this.extension.sessionsCache.get(mainSessionTitle);
+      let mergingSession = this.extension.sessionsCache.get(mergingSessionTitle);
+      let mergedSession = new ResearchSession(mainSession.title);
+      mergedSession.rssFeeds = mainSession.rssFeeds.concat(mergingSession.rssFeeds);
+      mergedSession.tabGroups = mainSession.tabGroups.concat(mergingSession.tabGroups);
+      mergedSession.savedCsvFilePaths = mainSession.savedCsvFilePaths.concat(mergingSession.savedCsvFilePaths);
+      mergedSession.savedArticleFilePaths = new Map(...mainSession.savedArticleFilePaths, ...mergingSession.savedArticleFilePaths);
+      mergedSession.citedArticleSnippets = new Map(...mainSession.citedArticleSnippets, ...mergingSession.citedArticleSnippets);
+      
+      this.extension.sessionsCache.set(mergedSession.title, mergedSession);
+      this.extension.sessionsCache.delete(mainSessionTitle);
+      this.extension.sessionsCache.delete(mergingSessionTitle);
+      this.extension.saveStorageChanges();
+   }
+
+   /**
+    * Delete an existing research session
+    */
+   deleteResearchSession(title) {
+      this.extension.sessionsCache.delete(title);
+      this.extension.saveStorageChanges();
+   }
+
+   /**
+    * Add a tab group to an existing research session
+    */
+   addNewTabGroupToSession(name, sessionTitle, rawTabData) {
+      var omittedTabs = [];
+      if (this.extension.sessionsCache.has(sessionTitle)){
+         var tabGroup = new TabGroup(name);
+         omittedTabs = tabGroup.addTabs(rawTabData);
+
+         this.extension.sessionsCache.get(sessionTitle).tabGroups.push(tabGroup);
+         this.extension.saveStorageChanges();
+         return omittedTabs;
+      }   
+      return omittedTabs;
+  }
+
+   /**
+    * Delete a tab group from an existing research session
+    */
+   deleteTabGroupFromSession(sessionTitle, tabGroupIndex) {
+      if (this.extension.sessionsCache.has(sessionTitle)){
+         this.extension.sessionsCache.get(sessionTitle).tabGroups.splice(tabGroupIndex, 1);
+         this.extension.saveStorageChanges();
+         return true;
+      }   
+      return false;
+   }
+
+   /**
+    * Launch a tab group from an existing research session
+    */
+   async launchTabGroupFromSession(sessionTitle, tabGroupIndex) {
+      if (this.extension.sessionsCache.has(sessionTitle)){
+         var tabGroup = this.extension.sessionsCache.get(sessionTitle).tabGroups[tabGroupIndex];
+         var urls = tabGroup.urls;
+
+         await browser.windows.create({
+            url: urls
+         });
+
+         return true;
+      }   
+      return false;
+   }
 }
 
-/**
- * Delete an existing research session
- */
-function deleteResearchSession(title) {
-   extension.sessionsCache.delete(title);
-   extension.saveStorageChanges();
+class Tab {
+   constructor(url, title) {
+      this.url = url;
+      this.title = title;
+   }
+}
+
+class TabGroup {
+   constructor(name) {
+      this.name = name;
+      this.tabs = new Array();
+      this.timestamp = new Date();
+   }
+
+   addTabs(rawTabData) {
+      var omittedTabs = new Array();
+      for (let rawTab of rawTabData) {
+         let url = rawTab.url;
+         let tab = new Tab(url, rawTab.title);
+         if (url.startsWith('http://') || url.startsWith('https://')) {
+            this.tabs.push(tab);
+         } else {
+            omittedTabs.push(tab);
+         }
+      }
+      return omittedTabs
+   }
+
+   get urls() {
+      var tabUrls = new Array();
+      for (let tab of this.tabs) {
+         tabUrls.push(browser.runtime.getURL(tab.url));
+      }
+      return tabUrls;
+   }
 }
