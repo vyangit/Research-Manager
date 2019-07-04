@@ -84,19 +84,50 @@ class ResearchSessionManager {
       this.extension.saveStorageChanges();
    }
 
+   /**
+    * Add a tab group to an existing research session
+    */
    addNewTabGroupToSession(name, sessionTitle, rawTabData) {
+      var omittedTabs = [];
       if (this.extension.sessionsCache.has(sessionTitle)){
-         var tabs = new Array();
-         for (let rawTab of rawTabData) {
-            tabs.push(new Tab(rawTab.url, rawTab.title))
-         }
-         this.extension.sessionsCache.get(sessionTitle).tabGroups.push(new TabGroup(name, tabs));
-         console.log(tabs);
+         var tabGroup = new TabGroup(name);
+         omittedTabs = tabGroup.addTabs(rawTabData);
+
+         this.extension.sessionsCache.get(sessionTitle).tabGroups.push(tabGroup);
+         this.extension.saveStorageChanges();
+         return omittedTabs;
+      }   
+      return omittedTabs;
+  }
+
+   /**
+    * Delete a tab group from an existing research session
+    */
+   deleteTabGroupFromSession(sessionTitle, tabGroupIndex) {
+      if (this.extension.sessionsCache.has(sessionTitle)){
+         this.extension.sessionsCache.get(sessionTitle).tabGroups.splice(tabGroupIndex, 1);
          this.extension.saveStorageChanges();
          return true;
       }   
       return false;
-  }
+   }
+
+   /**
+    * Launch a tab group from an existing research session
+    */
+   async launchTabGroupFromSession(sessionTitle, tabGroupIndex) {
+      if (this.extension.sessionsCache.has(sessionTitle)){
+         var tabGroup = this.extension.sessionsCache.get(sessionTitle).tabGroups[tabGroupIndex];
+         var urls = tabGroup.urls;
+
+         await browser.windows.create({
+            url: urls
+         });
+
+         return true;
+      }   
+      return false;
+   }
 }
 
 class Tab {
@@ -107,9 +138,31 @@ class Tab {
 }
 
 class TabGroup {
-   constructor(name, tabs) {
+   constructor(name) {
       this.name = name;
-      this.tabs = tabs;
+      this.tabs = new Array();
       this.timestamp = new Date();
+   }
+
+   addTabs(rawTabData) {
+      var omittedTabs = new Array();
+      for (let rawTab of rawTabData) {
+         let url = rawTab.url;
+         let tab = new Tab(url, rawTab.title);
+         if (url.startsWith('http://') || url.startsWith('https://')) {
+            this.tabs.push(tab);
+         } else {
+            omittedTabs.push(tab);
+         }
+      }
+      return omittedTabs
+   }
+
+   get urls() {
+      var tabUrls = new Array();
+      for (let tab of this.tabs) {
+         tabUrls.push(browser.runtime.getURL(tab.url));
+      }
+      return tabUrls;
    }
 }

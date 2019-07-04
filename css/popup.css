@@ -87,7 +87,7 @@ border-radius: 50%;
 }
 
 .session-tab-group-item {
-    margin: 0.5em;
+    margin: 0.5em 0;
 }
 
 #popup-tabs-bar::after{
@@ -102,8 +102,8 @@ border-radius: 50%;
 
 #tab-groups-view {
     font-size: 0.8em;
-    max-height: 8em;
-    overflow-y: scroll;
+    max-height: 12em;
+    overflow-y: auto;
 }
 
 .warning-text {
@@ -111,4 +111,13 @@ border-radius: 50%;
     padding: 0;
     font-size: 0.8em;
     color: rgb(255,0,0);
+}
+
+.color {
+    background-color: red;
+}
+
+.modal-body {
+    max-height: 12em;
+    overflow-y: auto;
 }

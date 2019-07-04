@@ -27,8 +27,6 @@ class PopupState {
         await this.linkExtensionStateListeners();
     }
 
-
-
     /** 
      * Links event listeners to the extension storage
     */ 
@@ -37,6 +35,10 @@ class PopupState {
         await browser.storage.onChanged.addListener( (changes, areaName) => {
             if (areaName == 'local') {
                 for (let itemChanged of Object.keys(changes)) {
+                    if (changes[itemChanged].oldValue === changes[itemChanged].newValue){
+                        continue;
+                    }
+                    
                     switch(itemChanged) {
                         case 'isOn':
                             this.setOnOff();
@@ -198,30 +200,46 @@ class PopupState {
         })
         for (let i = 0; i < tabGroups.length; i++) {
             let tabGroup = tabGroups[i];
-            console.log(tabGroup)
-            tabGroupsList.append($('<div></div>', {
-                class: 'session-tab-group-item',
-                value: i,
-                text: tabGroup.tabs.length + ' tabs'
-            }));
+            let tabGroupName = tabGroup.name == '' ? '': ' - ' + tabGroup.name;
+            tabGroupName = tabGroup.tabs.length + ' tabs' + tabGroupName;
+            tabGroupsList.append($('<div></div>',{
+                class: 'd-flex flex-row align-items-baseline justify-content-between m-2'
+            }).append(
+                $('<button></button>', {
+                    class: 'btn btn-link',
+                    value: i,
+                    text: tabGroupName,
+                    click: this.extension.researchSessionManager.launchTabGroupFromSession.bind(this, this.extension.currentSession, i)
+                }),
+                $('<button></button>',{
+                    class: 'btn btn-danger',
+                    text: 'Delete',
+                    click: this.extension.researchSessionManager.deleteTabGroupFromSession.bind(this, this.extension.currentSession, i)
+                })
+            ));
         } 
 
         // Add input to add new tab groups
         var addNewTabGroupInput = $('<div></div>', {
             class: "input-group mb-3"
-        }).append($('<input></input>', {
+        }).append(
+            $('<input></input>', {
                 id: "tab-group-name-text-input",
                 class: "form-control",
                 type: "text",
+                maxlength: 10,
                 placeholder: '(Optional) Tab Group Name',
-            }), $('<div></div>', {
+            }), 
+            $('<div></div>', {
                 class: "input-group-append"
-                }).append($('<button></button>', {
+            }).append(
+                $('<button></button>', {
                     class: "btn btn-primary",
                     click: this.createNewTabGroup.bind(this),
                     text: "Create tab group",
                     type: "button"
-                }))
+                })
+            )
         );
 
         tabGroupsView.append(tabGroupsList);
@@ -235,14 +253,40 @@ class PopupState {
         let tabsQuery = browser.tabs.query({
             currentWindow: true
         });
-        console.log("querying tabs")       
+
         tabsQuery.then((tabs) => {
-            console.log("Adding tabs")
-            this.extension.researchSessionManager.addNewTabGroupToSession(name, sessionTitle, tabs);
+            let omittedTabs = this.extension.researchSessionManager.addNewTabGroupToSession(name, sessionTitle, tabs);
+            // if (omittedTabs.length != 0) {
+            //     this.displayOmittedTabsModal(omittedTabs)
+            // };
             this.resetSessionView();
         });
     }
     
+    // displayOmittedTabsModal(omittedTabs) {
+    //     console.log('Display modal')
+    //     this.emptyPopupModal();
+    //     $('.modal-header').append('<h4></h4>', {
+    //         text: 'The following tabs were omitted'
+    //     });
+        
+    //     var list = $('<ul></ul>');
+    //     for (let tab of omittedTabs) {
+    //         list.append('<li></li>', {
+    //             text: tab.title + ' - ' + tab.url
+    //         });
+    //     }
+
+    //     $('.modal-body').append(list);
+    //     $('#message-modal').show();
+    // }
+
+    // emptyPopupModal() {
+    //     $('.modal-header').empty();
+    //     $('.modal-body').empty();
+    //     $('.modal-footer').empty();
+    // }
+
     populateQuotesView() {
         let session = this.extension.sessionsCache.get(this.extension.currentSession);
     }
