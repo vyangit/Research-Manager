@@ -11,8 +11,23 @@ class ExtensionState {
         this.currentSession; // Title of current {ResearchSession}
         this.rssFeeds;
         this.researchSessionManager = new ResearchSessionManager(this);
+        this.infoExtractor = new InfoExtractor(this);
+
+        this.initializeWindowListeners();
         this.initializeStorage();
     }
+
+    initializeWindowListeners() {
+        $(document).on('keypress', (e) => {this.hotkeyListener(e);});
+    }
+
+    hotkeyListener(e) {
+        if (e.altKey && e.which === 'c'){
+            //Check if highlighted text or nothing highlighted -> screenshot
+            
+        }
+    }
+
 
     /**
      * Checks and sets storage keys with default values if not already defined. Flags the isLoaded to true when finished

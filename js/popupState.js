@@ -119,11 +119,11 @@ class PopupState {
     */
      linkEventListeners() {
         $(document).on('click',this.resetWindow.bind(this));
-        $('#on-off-switch')[0].addEventListener('click', this.toggleOnOffListener.bind(this));
-        $('#session-selector')[0].addEventListener('change', this.switchSessionListener.bind(this));
-        $('#toggle-create-new-session-btn')[0].addEventListener('click', this.toggleSessionCreator.bind(this));
-        $('#cancel-new-session-btn')[0].addEventListener('click', this.toggleSessionCreator.bind(this));
-        $('#create-new-session-btn')[0].addEventListener('click', this.createNewSession.bind(this));
+        $('#on-off-switch').on('click', this.toggleOnOffListener.bind(this));
+        $('#session-selector').on('change', this.switchSessionListener.bind(this));
+        $('#toggle-create-new-session-btn').on('click', this.toggleSessionCreator.bind(this));
+        $('#cancel-new-session-btn').on('click', this.toggleSessionCreator.bind(this));
+        $('#create-new-session-btn').on('click', this.createNewSession.bind(this));
         $('.tab-item').on('click', this.setTab.bind(this));
     }
     
