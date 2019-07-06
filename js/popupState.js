@@ -20,6 +20,9 @@ class PopupState {
         });
     }
 
+    /**
+     * Loads the extension state from the background page
+     */
     async loadExtension() {
         let background = await browser.runtime.getBackgroundPage();
         this.extension = background.extensionState;

@@ -18,6 +18,11 @@
     "page": "components/backgroundPage.html"   
   },
 
+  "content_scripts": {
+    "matches": ["<all_urls>"],
+    "js":["js/content-scripts/infoFlowContentScript"]
+  },
+
   "browser_action": {
     "default_icon": "RM128.png",
     "default_title": "Research Manager",

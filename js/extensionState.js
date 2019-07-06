@@ -13,21 +13,9 @@ class ExtensionState {
         this.researchSessionManager = new ResearchSessionManager(this);
         this.infoExtractor = new InfoExtractor(this);
 
-        this.initializeWindowListeners();
         this.initializeStorage();
+        this.initializeMessageListeners();
     }
-
-    initializeWindowListeners() {
-        $(document).on('keypress', (e) => {this.hotkeyListener(e);});
-    }
-
-    hotkeyListener(e) {
-        if (e.altKey && e.which === 'c'){
-            //Check if highlighted text or nothing highlighted -> screenshot
-            
-        }
-    }
-
 
     /**
      * Checks and sets storage keys with default values if not already defined. Flags the isLoaded to true when finished
@@ -45,6 +33,19 @@ class ExtensionState {
         this.isLoaded = true;
         return;
     }
+
+    /**
+     *  Sets up message listeners for content script messages
+     */
+     async initializeMessageListeners() {
+        browser.runtime.onMessage.addListener(handleMessages);
+     }
+
+     handleMessages(request, sender, sendResponse) {
+        if (request.reqType === 'info-flow') {
+
+        }
+     }
 
     /**
      * Initiates a save process for all current state of variables
