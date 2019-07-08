@@ -15,16 +15,8 @@ class ResearchSession {
       this.title = title;
       this.rssFeeds = new Array();
       this.tabGroups = new Array();
-      this.savedCsvFilePaths = new Array();
-      this.savedArticleFilePaths = new Map(); //Articles should have a corresponding webpage
-      this.citedArticleSnippets = new Map(); // Article snippets should have a corresponding file path or webpage reference
-      this.citations = new Map(); // Empty until generated; keys are citation formats and values are arrays of citations
-   }
-   
-   generateCitations(citationType) {
-      // Be mindful that there are different types of citations such as APA/MLA and also if the citation should be webpage based or article based
-      //TODO: Figure out how to extract citations from a webpage as well from the summary/pdf doc provided on the page
-      //TODO: Implement func
+      this.quoteRefs = new Array(); // Array of Quotes
+      this.screenshots = new Array(); // Array of screenshots
    }
 }
 
@@ -128,6 +120,24 @@ class ResearchSessionManager {
       }   
       return false;
    }
+
+   /**
+    * Add a new screenshot to an existing research session
+    */
+   addNewScreenshot(sessionTitle, screenshotUrl, urlRefTag) {
+      if (this.extension.sessionsCache.has(sessionTitle)) {
+         this.extension.sessionsCache.get(sessionTitle).screenshots.push(new Screenshot(screenshotUrl, urlRefTag));
+      }
+   }
+
+   /**
+    * Add a new quote to an existing research session
+    */
+   addNewQuote(sessionTitle, quote, urlRefTag) {
+      if (this.extension.sessionsCache.has(sessionTitle)) {
+         this.extension.sessionsCache.get(sessionTitle).quoteRefs.push(new Quote(quote, urlRefTag));
+      }
+   }
 }
 
 class Tab {
@@ -164,5 +174,25 @@ class TabGroup {
          tabUrls.push(browser.runtime.getURL(tab.url));
       }
       return tabUrls;
+   }
+}
+
+class urlRefTag {
+   constructor(srcUrlPath, srcUrlTitle) {
+      this.srcUrlPath = srcUrlPath;
+      this.srcUrlTitle = srcUrlTitle;
+   }
+}
+class Screenshot {
+   constructor(screenshotUrl, urlRefTag) {
+      this.screenshotUrl = screenshotUrl;
+      this.urlRefTag = urlRefTag;
+   }
+}
+
+class Quote {
+   constructor(quote, urlRefTag) {
+      this.quote = quote;
+      this.urlRefTag = urlRefTag;
    }
 }

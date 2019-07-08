@@ -18,10 +18,11 @@
     "page": "components/backgroundPage.html"   
   },
 
-  "content_scripts": {
+  "content_scripts": [{
     "matches": ["<all_urls>"],
-    "js":["js/content-scripts/infoFlowContentScript"]
-  },
+    "js":["js/jquery-3.4.0.min.js", "js/content-scripts/infoFlowContentScript.js"],
+    "run_at": "document_idle"
+  }],
 
   "browser_action": {
     "default_icon": "RM128.png",

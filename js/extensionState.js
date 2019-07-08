@@ -11,7 +11,6 @@ class ExtensionState {
         this.currentSession; // Title of current {ResearchSession}
         this.rssFeeds;
         this.researchSessionManager = new ResearchSessionManager(this);
-        this.infoExtractor = new InfoExtractor(this);
 
         this.initializeStorage();
         this.initializeMessageListeners();
@@ -38,12 +37,18 @@ class ExtensionState {
      *  Sets up message listeners for content script messages
      */
      async initializeMessageListeners() {
-        browser.runtime.onMessage.addListener(handleMessages);
+        console.log("Initializing message listener")
+        browser.runtime.onMessage.addListener(this.handleMessages.bind(this));
      }
 
      handleMessages(request, sender, sendResponse) {
         if (request.reqType === 'info-flow') {
-
+            let refTag = new UrlRefTag(request.url, request.title);
+            if (request.isScreenShot) {
+                this.researchSessionManager.addNewScreenshot(request.data, refTag);
+            } else {
+                this.researchSessionManager.addNewQuote(request.data, refTag);
+            }
         }
      }
 
