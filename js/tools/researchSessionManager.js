@@ -124,10 +124,15 @@ class ResearchSessionManager {
    /**
     * Add a new screenshot to an existing research session
     */
-   addNewScreenshot(sessionTitle, screenshotUrl, urlRefTag) {
+   addNewScreenshot(sessionTitle, screenshot) {
       if (this.extension.sessionsCache.has(sessionTitle)) {
-         this.extension.sessionsCache.get(sessionTitle).screenshots.push(new Screenshot(screenshotUrl, urlRefTag));
+         this.extension.sessionsCache.get(sessionTitle).screenshots.push(screenshot);
       }
+   }
+
+   getCroppedScreenshot(screenshotUrl, screenshotCoordinates, urlRefTag) {
+      let croppedScreenshotUrl;
+      return new Screenshot(croppedScreenshotUrl, urlRefTag) 
    }
 
    /**
@@ -177,12 +182,13 @@ class TabGroup {
    }
 }
 
-class urlRefTag {
+class UrlRefTag {
    constructor(srcUrlPath, srcUrlTitle) {
       this.srcUrlPath = srcUrlPath;
       this.srcUrlTitle = srcUrlTitle;
    }
 }
+
 class Screenshot {
    constructor(screenshotUrl, urlRefTag) {
       this.screenshotUrl = screenshotUrl;

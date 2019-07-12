@@ -11,7 +11,8 @@ class ExtensionState {
         this.currentSession; // Title of current {ResearchSession}
         this.rssFeeds;
         this.researchSessionManager = new ResearchSessionManager(this);
-
+        this.preparedScreenshotDataUrl;
+        this.screenshotCompiler = new ScreenshotCompiler(this);
         this.initializeStorage();
         this.initializeMessageListeners();
     }
@@ -41,14 +42,33 @@ class ExtensionState {
         browser.runtime.onMessage.addListener(this.handleMessages.bind(this));
      }
 
-     handleMessages(request, sender, sendResponse) {
+     async handleMessages(request, sender, sendResponse) {
+        // console.log(request);
+        
         if (request.reqType === 'info-flow') {
-            let refTag = new UrlRefTag(request.url, request.title);
+            let currentTab = await browser.tabs.query({
+                currentWindow: true,
+                active: true
+            });
+            let refTag = new UrlRefTag(currentTab.url, currentTab.title);
             if (request.isScreenShot) {
-                this.researchSessionManager.addNewScreenshot(request.data, refTag);
+                let croppedScreenshot = this.researchSessionManager.getCroppedScreenshot(
+                    this.preparedScreenshotDataUrl, 
+                    request.data,
+                    refTag
+                );
+                this.researchSessionManager.addNewScreenshot(this.currentSession, croppedScreenshot);
             } else {
-                this.researchSessionManager.addNewQuote(request.data, refTag);
+                this.researchSessionManager.addNewQuote(this.currentSession, request.data, refTag);
             }
+        } else if (request.reqType === 'prepare-screen') {
+            await this.screenshotCompiler.prepare();
+        } else if (request.reqType === 'update-screen') {
+            await this.screenshotCompiler.queueUpdate(request.scrollDir);
+        } else if (request.reqType === 'prepare-screenshot') {
+            await this.screenshotCompiler.prepare();
+        } else if (request.reqType === 'update-screenshot') {
+            await this.screenshotCompiler.queueUpdate(request.scrollDir);
         }
      }
 

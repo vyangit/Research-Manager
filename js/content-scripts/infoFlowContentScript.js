@@ -1,18 +1,87 @@
 console.log('hello contents')
-$(document).bind('keydown', (e) => hotKeyListener(e));
+$(document).on('keydown', (e) => hotKeyListener(e));
+
+var cancelScreenshotBtn = $('<button></button>',{
+    id: 'rm-screenshot-selection-capture-canvas-cancel-btn',
+    class: 'rm-screenshot-btns',
+    text: 'Cancel',
+    click: () => {cancelScreenshot();},
+    hidden: true
+});
+cancelScreenshotBtn.css({
+    cursor: 'pointer',
+    borderRadius: '10px',
+    border: '2px solid rgba(0,0,0,0.5)',
+});
+
+var saveScreenshotBtn = $('<button></button>',{
+    id: 'rm-screenshot-selection-capture-canvas-save-btn',
+    class: 'rm-screenshot-btns',
+    text: 'Save',
+    click: () => {saveScreenshot();},
+    hidden: true
+});
+saveScreenshotBtn.css({
+    cursor: 'pointer',
+    borderRadius: '10px',
+    border: '2px solid rgba(0,0,0,0.5)',
+});
+
+var screenshotBtns = $('<span></span>', {
+    id: 'rm-screenshot-selection-btns'
+});
+screenshotBtns.css({
+    position: 'fixed',
+    fontSize: '2em',
+    bottom: '2vh',
+    right: '2vw',
+    zIndex: '10001',
+    color: 'white'
+});
+screenshotBtns.append(saveScreenshotBtn, cancelScreenshotBtn);
 
 var screenshotSelectionArea = null;
 var screenshotIsToggledOn = false;
 var startCoordinate = null;
 var endCoordinate = null;
+var screenshotAreaUpdateLock = false;
+
+var prevScrollTop = null;
+var prevScrollLeft = null;
+var scrollThreshold = 30;
 
 function cancelScreenshot() {
     screenshotIsToggledOn = false;
     screenshotCanvas = null;
     startCoordinate = null;
     endCoordinate = null;
+
     $('#rm-screenshot-selection-capture-canvas').remove();
-    $('#rm-screenshot-selection-capture-canvas-cancel-btn').remove();
+
+    $(document).off('scroll');
+    $(window).off('resize');
+}
+
+function saveScreenshot() {
+    let screenshotCoordinates = getCanvasTopLeftAndBottomRight(startCoordinate, endCoordinate);
+    sendScreenshotDataDeliveryReq(screenshotCoordinates);
+    cancelScreenshot();
+}
+
+async function hotKeyListener(e) {
+    if (e.altKey && e.which === 67){
+        // Check if highlighted text or nothing highlighted -> screenshot
+        if (window.getSelection().toString() === '') {
+            await prepareScreenArea();
+            selectScreenshot();
+            await prepareScreenshotArea();
+        } else {
+            sendQuoteDataDeliveryReq();
+        }
+    }
+    if (e.which === 27){
+        cancelScreenshot();
+    }
 }
 
 function selectScreenshot() {
@@ -24,104 +93,65 @@ function selectScreenshot() {
             mousemove: (e) => {updateScreenshotCoordinates(e);}
         });
         screenshotSelectionArea.css({
-            backgroundColor: 'rgba(0,0,0,0.25)',
-            position: 'fixed',
+            position: 'absolute',
             top: '0',
             left: '0',
             margin: '0',
             padding: '0',
-            width: window.innerWidth,
-            height: window.innerHeight,
+            width: $('body').width(),
+            height: $('body').height(),
             zIndex: '10000',
             cursor: 'crosshair'
         })
-        let cancelBtn = $('<button></button>',{
-            id: 'rm-screenshot-selection-capture-canvas-cancel-btn',
-            text: 'Cancel',
-            click: () => {cancelScreenshot();}
-        });
-        cancelBtn.css({
-            position: 'fixed',
-            fontSize: '2em',
-            bottom: '2vh',
-            right: '2vw',
-            zIndex: '10001',
-            cursor: 'pointer'
-        });
 
+        $(document).on('scroll', () => {updateScreenshotArea()});
+        $(window).on('resize', () => {
+            cancelScreenshot();
+            selectScreenshot();
+        });
         $(document.body).append(screenshotSelectionArea);
-        $(document.body).append(cancelBtn);
     }
 }
 
-function hotKeyListener(e) {
-    if (e.altKey && e.which === 67){
-        // Check if highlighted text or nothing highlighted -> screenshot
-        if (window.getSelection().toString() === '') {
-            sendScreenshotDataDeliveryReq();
+function screenshotSelectionListener(e) {
+    if (screenshotIsToggledOn) {
+        if (startCoordinate != null && endCoordinate == null) {
+            endCoordinate = getMousePos(e);
+            prevScrollTop = e.scrollTop();
+            this.attachScreenshotCmdBtns();
         } else {
-            sendQuoteDataDeliveryReq();
+            startCoordinate = getMousePos(e);
+            endCoordinate = null;
+            saveScreenshotBtn.attr('hidden', true);
         }
     }
 }
 
+// TODO
+function attachScreenshotCmdBtns() {
+    console.log("Attach btns")
+}
+
 function updateScreenshotCoordinates(e) {
-    if (screenshotIsToggledOn && startCoordinate != null) {
-        endCoordinate = {
-            x: e.clientX,
-            y: e.clientY
-        };
+    if (!screenshotAreaUpdateLock && screenshotIsToggledOn && startCoordinate != null && endCoordinate == null) {
+        let tempCoordinate = getMousePos(e);
         let canvas = screenshotSelectionArea[0]
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        canvas.width = $('body').width();
+        canvas.height = $('body').height();
         let ctx = canvas.getContext('2d');
 
         ctx.clearRect(0, 0, canvas.width, canvas.height); // clear canvas
         ctx.beginPath();
-        ctx.fillStyle  = 'rgba(255,255,255,0.5)';
-        ctx.strokeStyle = 'black';
-        let start = {
-            x: endCoordinate.x < startCoordinate.x ? endCoordinate.x : startCoordinate.x,
-            y: endCoordinate.y < startCoordinate.y ? endCoordinate.y : startCoordinate.y
-        }
-        let end = {
-            x: endCoordinate.x < startCoordinate.x ? startCoordinate.x : endCoordinate.x,
-            y: endCoordinate.y < startCoordinate.y ? startCoordinate.y : endCoordinate.y
-        }
+        ctx.fillStyle  = 'rgba(0,0,0,0.5)';
         
-        canvasStart = getCanvasPos(canvas,start);
-        canvasEnd = getCanvasPos(canvas,end);
-
+        let frame = getCanvasTopLeftAndBottomRight(startCoordinate, tempCoordinate);
+        let canvasStart = frame.topLeft;
+        let canvasEnd = frame.bottomRight;
+        
         let width = canvasEnd.x-canvasStart.x;
         let height = canvasEnd.y-canvasStart.y;
-        
         ctx.rect(canvasStart.x, canvasStart.y, width , height);
         ctx.fill();
-        ctx.stroke();
-    }
-}
-
-function getCanvasPos(canvas, clientPoint) {
-    var rect = canvas.getBoundingClientRect(), // abs. size of element
-        scaleX = canvas.width / rect.width,    // relationship bitmap vs. element for X
-        scaleY = canvas.height / rect.height;  // relationship bitmap vs. element for Y
-  
-    return {
-      x: (clientPoint.x - rect.left) * scaleX,   // scale mouse coordinates after they have
-      y: (clientPoint.y - rect.top) * scaleY     // been adjusted to be relative to element
-    }
-  }
-
-function screenshotSelectionListener(e) {
-    if (screenshotIsToggledOn) {
-        if (startCoordinate == null) {
-            startCoordinate = {
-                x: e.clientX,
-                y: e.clientY
-            };
-        } else {
-            screenshotIsToggledOn = false;
-        }
     }
 }
 
@@ -133,37 +163,90 @@ function handleInfoExtractionError() {
     // Use pageAction pop up to notif user
 }
 
-function sendScreenshotDataDeliveryReq() {
-    let screenshot = selectScreenshot();
-   
+async function sendScreenshotDataDeliveryReq(screenshotCoordinates) {
     let req = {
         reqType: 'info-flow',
         isScreenShot: true,
-        data: screenshot,
-        url: currentTab.url,
-        title: currentTab.title
+        data: screenshotCoordinates
     }
     notifyBackgroundPageOfInfo(req)
 }
 
-function updateScreenshotSelection() {
-
-}
-
-function sendQuoteDataDeliveryReq(currentTab) {
-    console.log("quote")
+async function sendQuoteDataDeliveryReq() {
     let req = {
         reqType: 'info-flow',
         isScreenShot: false,
-        data: window.getSelection().toString(),
-        url: currentTab.url,
-        title: currentTab.title
+        data: window.getSelection().toString()
     }
     notifyBackgroundPageOfInfo(req)
 }
 
-function notifyBackgroundPageOfInfo(infoDeliveryReq) {
+async function updateImageAreas(e) {
+    let scrollTop = $(document).scrollTop();
+    let scrollLeft = $(document).scrollLeft();
+    if (screenshotIsToggledOn && 
+        startCoordinate != null && 
+        endCoordinate == null && 
+        Math.abs(scrollTop-prevScrollTop) > scrollThreshold  && 
+        Math.abs(scrollLeft-prevScrollLeft) > scrollThreshold) {
+
+        screenshotAreaUpdateLock = true;
+    
+        screenshotSelectionArea.attr('hidden', true);
+        screenshotAreaUpdateLock = true;
+
+        let scrollDir = scrollTop == prevScrollTop ? scrollLeft > prevScrollLeft ? 'R' : 'L' : scrollTop > prevScrollLeft ? 'D': 'U' ; //Extra information could be useful optimization later
+        prevScrollTop = scrollTop;
+        prevScrollLeft = scrollLeft;
+        
+        let req = {
+            reqType: 'update-screen',
+            scrollDir: scrollDir 
+        }
+        await notifyBackgroundPageOfInfo(req);
+        
+        req.reqType = 'update-screenshot';
+        screenshotSelectionArea.attr('hidden', false);
+        screenshotAreaUpdateLock = false;
+        await notifyBackgroundPageOfInfo(req)
+    }
+}
+
+async function prepareScreenArea() {
+    let req = {
+        reqType: 'prepare-screen'
+    }
+    await notifyBackgroundPageOfInfo(req)
+}
+
+async function prepareScreenshotArea() {
+    let req = {
+        reqType: 'prepare-screenshot'
+    }
+    await notifyBackgroundPageOfInfo(req)
+}
+
+async function notifyBackgroundPageOfInfo(infoDeliveryReq) {
     var sending = browser.runtime.sendMessage(infoDeliveryReq)
     sending.then(handleInfoExtractionResponse, handleInfoExtractionError);
 }
 
+function getMousePos(e) {
+    return {
+        x: e.pageX,
+        y: e.pageY
+    };
+}
+
+function getCanvasTopLeftAndBottomRight(coordinate1, coordinate2) {
+    var coordinates = {};
+    coordinates.topLeft = {
+        x: coordinate1.x < coordinate2.x ? coordinate1.x : coordinate2.x,
+        y: coordinate1.y < coordinate2.y ? coordinate1.y : coordinate2.y
+    }
+    coordinates.bottomRight = {
+        x: coordinate1.x < coordinate2.x ? coordinate2.x : coordinate1.x,
+        y: coordinate1.y < coordinate2.y ? coordinate2.y : coordinate1.y
+    }
+    return coordinates;
+}
